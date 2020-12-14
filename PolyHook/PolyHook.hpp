@@ -12,19 +12,26 @@
 #include <assert.h>
 #pragma comment(lib,"Dbghelp.lib")
 #pragma comment(lib,"capstone.lib")
-#define PLH_SHOW_DEBUG_MESSAGES 1 //To print messages even in release
 
 namespace PLH {
 	namespace Tools
 	{
-		inline void XTrace(const char* fmt, ...)
+		template<typename Format, typename... Args>
+		inline void XTrace(Format&& fmt, Args&&... args)
 		{
+#if defined(_DEBUG) || defined(PLH_SHOW_DEBUG_MESSAGES)
+			_XTrace(std::forward<Format>(fmt), std::forward<Args>(args)...);
+#endif
+		}
+
+		inline void _XTrace(const char* fmt, ...)
+		{
+#if defined(_DEBUG) || defined(PLH_SHOW_DEBUG_MESSAGES)
 			va_list args;
 			va_start(args, fmt);
-#if defined(_DEBUG) || defined(PLH_SHOW_DEBUG_MESSAGES)
 			vfprintf_s(stdout, fmt, args);
-#endif
 			va_end(args);
+#endif
 		}
 
 		class ThreadHandle
@@ -34,8 +41,6 @@ namespace PLH {
 			ThreadHandle(DWORD ThreadId, DWORD  DesiredAccessFlags) : m_ThreadId(ThreadId), m_IsSuspended(false)
 			{
 				m_hThread = OpenThread(DesiredAccessFlags, FALSE, ThreadId);
-				if(m_hThread == NULL)
-					throw "PolyHook: Failed to open thread in class ThreadHandle";
 			}
 
 			//Only allow once instance to control a handle
@@ -724,7 +729,7 @@ void PLH::IHook::PostError(const RuntimeError& Err)
 
 void PLH::IHook::PrintError(const RuntimeError& Err) const
 {
-	std::string Severity = "";
+	const char* Severity = "";
 	switch (Err.GetSeverity())
 	{
 	case PLH::RuntimeError::Severity::Warning:
@@ -742,7 +747,7 @@ void PLH::IHook::PrintError(const RuntimeError& Err) const
 	default:
 		Severity = "Unknown";
 	}
-	PLH::Tools::XTrace("SEVERITY:[%s] %s\n", Severity.c_str(),
+	PLH::Tools::XTrace("SEVERITY:[%s] %s\n", Severity,
 		Err.GetString().c_str());
 }
 
