@@ -200,7 +200,14 @@ typedef struct cs_opt_skipdata {
 } cs_opt_skipdata;
 
 
+#include "arm.h"
+#include "arm64.h"
+#include "mips.h"
+#include "ppc.h"
+#include "sparc.h"
+#include "systemz.h"
 #include "x86.h"
+#include "xcore.h"
 
 // NOTE: All information in cs_detail is only available when CS_OPT_DETAIL = CS_OPT_ON
 typedef struct cs_detail {
@@ -216,13 +223,20 @@ typedef struct cs_detail {
 	// Architecture-specific instruction info
 	union {
 		cs_x86 x86;	// X86 architecture, including 16-bit, 32-bit & 64-bit mode
+		cs_arm64 arm64;	// ARM64 architecture (aka AArch64)
+		cs_arm arm;		// ARM architecture (including Thumb/Thumb2)
+		cs_mips mips;	// MIPS architecture
+		cs_ppc ppc;	// PowerPC architecture
+		cs_sparc sparc;	// Sparc architecture
+		cs_sysz sysz;	// SystemZ architecture
+		cs_xcore xcore;	// XCore architecture
 	};
 } cs_detail;
 
 // Detail information of disassembled instruction
 typedef struct cs_insn {
 	// Instruction ID (basically a numeric ID for the instruction mnemonic)
-	// Find the instruction id in the '[ARCH]_insn' enum in the header file
+	// Find the instruction id in the '[ARCH]_insn' enum in the header file 
 	// of corresponding architecture, such as 'arm_insn' in arm.h for ARM,
 	// 'x86_insn' in x86.h for X86, etc...
 	// This information is available even when CS_OPT_DETAIL = CS_OPT_OFF
@@ -409,7 +423,7 @@ const char *cs_strerror(cs_err code);
  which complicates things. This is especially troublesome for the case @count=0,
  when cs_disasm() runs uncontrollably (until either end of input buffer, or
  when it encounters an invalid instruction).
-
+ 
  @handle: handle returned by cs_open()
  @code: buffer containing raw binary code to be disassembled.
  @code_size: size of the above code buffer.
@@ -488,7 +502,7 @@ cs_insn *cs_malloc(csh handle);
  which complicates things. This is especially troublesome for the case
  @count=0, when cs_disasm() runs uncontrollably (until either end of input
  buffer, or when it encounters an invalid instruction).
-
+ 
  @handle: handle returned by cs_open()
  @code: buffer containing raw binary code to be disassembled
  @code_size: size of above code
